@@ -55,6 +55,7 @@ class UncertaintySettings(BaseModel):
     aggregation: str
     topk_fraction: float
     candidate_multiplier: int
+    target_classes: list[int] = Field(default_factory=list)
 
 
 class AlgesSettings(BaseModel):
@@ -95,6 +96,7 @@ class SaveUncertaintySettings(BaseModel):
     aggregation: str | None = None
     topk_fraction: float | None = None
     candidate_multiplier: int | None = None
+    target_classes: list[int] | None = None
 
 
 class SaveAlgesSettings(BaseModel):
@@ -149,6 +151,7 @@ class QueryPreviewRequest(BaseModel):
     aggregation: str | None = None
     topk_fraction: float | None = None
     candidate_multiplier: int | None = None
+    target_classes: list[int] | None = None
     alges_model: str | None = None
     alges_model_url: str | None = None
     method: str | None = None

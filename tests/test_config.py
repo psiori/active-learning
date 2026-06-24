@@ -89,6 +89,11 @@ def test_uncertainty_config_accepts_bald():
     assert UncertaintyCoresetConfig(provider="bald").provider == "bald"
 
 
+def test_uncertainty_config_normalizes_target_classes():
+    cfg = UncertaintyCoresetConfig(target_classes=["1", 2])
+    assert cfg.target_classes == [1, 2]
+
+
 def test_build_seed_config_requires_sensor():
     cfg = {
         "models": {"u": {"type": "unet", "path": "/tmp/model.zip"}},

@@ -160,6 +160,7 @@ uncertainty_coreset:
   aggregation: topk_mean
   topk_fraction: 0.10
   candidate_multiplier: 4
+  target_classes: []
 
 alges:
   model: geiles_unet_250912

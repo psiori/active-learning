@@ -8,6 +8,7 @@ from tqdm import tqdm
 from active_learning.providers.aggregation import (
     aggregate_uncertainty_map,
     entropy_map,
+    target_class_mask,
 )
 from active_learning.providers.inference import (
     build_infer_fn,
@@ -22,6 +23,7 @@ def entropy_scores_for_batch(
     *,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
 ) -> np.ndarray:
     """Single-pass predictive entropy per image for one TF batch."""
     result = infer(batch)
@@ -31,6 +33,7 @@ def entropy_scores_for_batch(
         entropy,
         aggregation=aggregation,
         topk_fraction=topk_fraction,
+        target_mask=target_class_mask(probs, target_classes),
     )
     return np.asarray(per_image, dtype=np.float32).reshape(-1)
 
@@ -40,6 +43,7 @@ def make_entropy_score_batch_fn(
     *,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
 ):
     model = unet.model
     infer = build_infer_fn(model, training=False)
@@ -50,6 +54,7 @@ def make_entropy_score_batch_fn(
             batch,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
         )
 
     return score_batch
@@ -61,6 +66,7 @@ def entropy_provider(
     batch_size: int = 16,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     *,
     progress: bool = False,
 ) -> Callable[[list[str]], np.ndarray]:
@@ -74,6 +80,7 @@ def entropy_provider(
             batch_size,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
             progress=progress,
         )
 
@@ -87,6 +94,7 @@ def compute_entropy_uncertainty(
     batch_size,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     *,
     progress: bool = False,
 ) -> np.ndarray:
@@ -104,6 +112,7 @@ def compute_entropy_uncertainty(
             batch,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
         )
         all_uncertainties.extend(per_image.tolist())
 
