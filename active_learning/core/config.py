@@ -135,7 +135,7 @@ def merge_cli(yaml_dict: dict, cli_args, mapping: dict[str, tuple[str, str]]) ->
     return result
 
 
-def _deep_merge(base: dict, overlay: dict) -> dict:
+def deep_merge(base: dict, overlay: dict) -> dict:
     """Recursively merge *overlay* into *base*. Returns a new dict.
 
     - Dicts are merged recursively (overlay keys win on conflict).
@@ -144,10 +144,14 @@ def _deep_merge(base: dict, overlay: dict) -> dict:
     result = deepcopy(base)
     for key, value in overlay.items():
         if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _deep_merge(result[key], value)
+            result[key] = deep_merge(result[key], value)
         else:
             result[key] = deepcopy(value)
     return result
+
+
+def _deep_merge(base: dict, overlay: dict) -> dict:
+    return deep_merge(base, overlay)
 
 
 # ---------------------------------------------------------------------------
@@ -576,51 +580,6 @@ def build_seed_config(
         alges=alges,
         export=export,
     )
-
-
-# ---------------------------------------------------------------------------
-# CLI mapping for seed.py (maps argparse dest -> yaml section + key)
-# ---------------------------------------------------------------------------
-
-SEED_CLI_MAP = {
-    # selection
-    "strategy": ("selection", "strategy"),
-    "n_select": ("selection", "n_select"),
-    "rng_seed": ("selection", "seed"),
-    "min_milliseconds_between_images": (
-        "query",
-        "min_milliseconds_between_images",
-    ),
-    # query
-    "max_size": ("query", "max_size"),
-    "sensor": ("query", "sensor"),
-    "cache_root": ("query", "cache_root"),
-    "sama_project_id": ("export", "sama_project_id"),
-    "sama_priority": ("query", "sama_priority"),
-    "exclude_seeded": ("query", "exclude_seeded"),
-    "min_brightness": ("query", "min_brightness"),
-    "max_brightness": ("query", "max_brightness"),
-    "brightness_filter_enabled": ("query", "brightness_filter_enabled"),
-    "start": ("query", "start"),
-    "end": ("query", "end"),
-    "use_full_res_images": ("query", "use_full_res_images"),
-    # coreset
-    "feature_model": ("coreset", "feature_model"),
-    # uncertainty_coreset
-    "alpha": ("uncertainty_coreset", "alpha"),
-    "provider": ("uncertainty_coreset", "provider"),
-    "mc_iterations": ("uncertainty_coreset", "mc_iterations"),
-    "aggregation": ("uncertainty_coreset", "aggregation"),
-    "topk_fraction": ("uncertainty_coreset", "topk_fraction"),
-    "candidate_multiplier": ("uncertainty_coreset", "candidate_multiplier"),
-    # alges
-    "method": ("alges", "method"),
-    # export
-    "export_prefix": ("export", "prefix"),
-    "mosaic_path": ("export", "mosaic_path"),
-    "export_sama": ("export", "seed"),
-    "overlay": ("export", "overlay"),
-}
 
 
 def handle_model_path_override(yaml_dict: dict, cli_args) -> dict:

@@ -6,6 +6,7 @@ import argparse
 
 import pytest
 
+from active_learning.cli.common import SEED_CLI_MAP
 from active_learning.core.config import (
     _UNSET,
     ConfigError,
@@ -14,7 +15,6 @@ from active_learning.core.config import (
     build_seed_config,
     merge_cli,
     parse_boolish,
-    SEED_CLI_MAP,
 )
 from active_learning.integrations.crid.export import (
     _MAX_AZURE_EXPORT_CONTAINER_NAME_LEN,

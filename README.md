@@ -95,6 +95,21 @@ Related flags used by some strategies:
 - `--method {image,semantic}`
   - Used by `alges` and `alges_coreset` to choose the ALGES embedding variant.
 
+## Local Images
+
+Use `active-learning-local` to run selection on a recursive directory of local
+images without CRID or Sama:
+
+```bash
+active-learning-local --images-dir /path/to/images --strategy coreset -n 50
+```
+
+The local runner scans `.jpg`, `.jpeg`, `.png`, `.webp`, and `.bmp` files,
+uses POSIX-style relative paths as sample IDs, and writes a mosaic plus YAML
+handoff next to the configured mosaic path. `coreset` is the recommended
+starter strategy because it only needs image features; uncertainty and ALGES
+strategies still require a configured UNet model.
+
 ## Example
 
 For a CRID-backed active-learning run with ALGES and Sama export:

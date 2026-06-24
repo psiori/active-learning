@@ -28,6 +28,12 @@ ensure_tensorflow_log_suppression()
 from interface.crid import CRID
 from interface.model.models import SensorName
 
+from active_learning.cli.common import (
+    SEED_CLI_MAP,
+    add_common_seed_args,
+    add_crid_seed_args,
+    prepare_strategy_models,
+)
 from active_learning.core import (
     apply_brightness_predicate,
     build_image_provider,
@@ -35,7 +41,6 @@ from active_learning.core import (
 )
 from active_learning.core.config import (
     _UNSET,
-    SEED_CLI_MAP,
     ConfigError,
     brightness_filter_inactive,
     build_seed_config,
@@ -53,11 +58,6 @@ from active_learning.integrations.crid.export import (
 )
 from active_learning.integrations.crid.provider_source import CridImageProviderSource
 from active_learning.integrations.crid.source import CridSource
-from active_learning.providers import (
-    create_penultimate_model,
-    enable_mc_dropout,
-    load_unet,
-)
 from active_learning.sinks.mosaic import (
     mosaic_output_path,
     render_mosaic,
@@ -124,27 +124,7 @@ def select_samples(cfg, image_provider) -> SelectionResult:
     if not candidate_ids:
         raise RuntimeError("Brightness filtering removed all images from the pool.")
 
-    strategy = cfg.selection.strategy
-    uncertainty_model = None
-    alges_model = None
-
-    if strategy in (
-        "uncertainty_coreset",
-        "uncertainty_topk",
-        "uncertainty_topk_coreset",
-    ):
-        uc = cfg.uncertainty_coreset
-        uc_model_def = cfg.models[uc.uncertainty_model]
-        unet = load_unet(uc_model_def.path)
-        uncertainty_model = (
-            enable_mc_dropout(unet) if uc.provider in {"mc_dropout", "bald"} else unet
-        )
-
-    if strategy in ("alges", "alges_coreset"):
-        al = cfg.alges
-        al_model_def = cfg.models[al.model]
-        al_unet = load_unet(al_model_def.path)
-        alges_model = create_penultimate_model(enable_mc_dropout(al_unet))
+    uncertainty_model, alges_model = prepare_strategy_models(cfg)
 
     return run_selection(
         cfg,
@@ -227,70 +207,8 @@ def persist_outputs(cfg, result: SelectionResult, crid, image_provider) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Select images using active learning")
-    U = _UNSET
-    parser.add_argument("-c", "--config", default=None, help="Path to YAML config file")
-    parser.add_argument("-p", "--project", default=U, help="Project preset name")
-    parser.add_argument("--strategy", default=U)
-    parser.add_argument("-n", "--n-select", type=int, default=U)
-    parser.add_argument(
-        "--rng-seed",
-        type=int,
-        default=U,
-        help="Random seed for the active-learning selector.",
-    )
-    parser.add_argument(
-        "--min-milliseconds-between-images",
-        type=float,
-        default=U,
-        metavar="MS",
-        help="Before brightness/selection, thin the pool by capture time in sample IDs "
-        "(0 disables). Avoids downloading images that will not enter the pool.",
-    )
-    parser.add_argument(
-        "--max-size",
-        type=int,
-        default=U,
-        help="Maximum number of ES documents to fetch (default 100000).",
-    )
-    parser.add_argument("-s", "--sensor", default=U)
-    parser.add_argument("--cache-root", default=U)
-    parser.add_argument("--start", default=U)
-    parser.add_argument("--end", default=U)
-    parser.add_argument("--sama-project-id", type=int, default=U)
-    parser.add_argument("--sama-priority", type=int, default=U)
-    parser.add_argument("--exclude-seeded", default=U)
-    parser.add_argument("--min-brightness", type=float, default=U)
-    parser.add_argument("--max-brightness", type=float, default=U)
-    parser.add_argument("--use-full-res-images", action="store_true", default=U)
-    parser.add_argument("--feature-model", default=U)
-    parser.add_argument("-a", "--alpha", type=float, default=U)
-    parser.add_argument(
-        "--provider",
-        default=U,
-        choices=["mc_dropout", "entropy", "bald"],
-    )
-    parser.add_argument("--mc-iterations", type=int, default=U)
-    parser.add_argument("--batch-size", type=int, default=U)
-    parser.add_argument(
-        "--aggregation",
-        default=U,
-        choices=["mean", "topk_mean", "max"],
-    )
-    parser.add_argument("--topk-fraction", type=float, default=U)
-    parser.add_argument("--candidate-multiplier", type=int, default=U)
-    parser.add_argument("--method", default=U, choices=["image", "semantic"])
-    parser.add_argument("--export-prefix", default=U)
-    parser.add_argument("--mosaic-path", default=U)
-    parser.add_argument(
-        "--export-sama",
-        dest="export_sama",
-        action="store_true",
-        default=U,
-        help="If provided, submit the selected images to Sama/CRID.",
-    )
-    parser.add_argument("--overlay", action="store_true", default=U)
-    parser.add_argument("--model-path", default=U)
-    parser.add_argument("--model-name", default=U)
+    add_common_seed_args(parser)
+    add_crid_seed_args(parser)
     return parser
 
 
@@ -302,8 +220,8 @@ def main() -> None:
     yaml_dict = load_yaml(args.config)
     project = args.project if args.project is not _UNSET else None
     yaml_dict = resolve_project(yaml_dict, project)
-    yaml_dict = handle_model_path_override(yaml_dict, args)
     merged = merge_cli(yaml_dict, args, SEED_CLI_MAP)
+    merged = handle_model_path_override(merged, args)
     try:
         cfg = build_seed_config(merged)
     except ConfigError as exc:
