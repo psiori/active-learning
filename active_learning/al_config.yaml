@@ -1,0 +1,170 @@
+# Active learning configuration
+# Shared across all AL scripts. Each script reads only the sections it needs.
+
+# Project presets — select with --project <name>
+# Each key mirrors a top-level section and is deep-merged into it.
+projects:
+  skasoegel:
+    crid_origin: skasoegel
+    query:
+      sensor: CAM_TROLLEY
+    export:
+      sama_project_id: 63791
+      prefix: al-ska-trolley
+    alges:
+      model: geiles_unet_250912
+    uncertainty_coreset:
+      uncertainty_model: geiles_unet_250912
+  miniportal:
+    query:
+      sensor: CAM_TROLLEY_HD
+    export:
+      sama_project_id: 13803
+      prefix: al-miniportal-trolley
+    alges:
+      model: geiles_unet_250912
+    uncertainty_coreset:
+      uncertainty_model: geiles_unet_250912
+  poeppelmann:
+    crid_origin: miniportal
+    query:
+      sensor: CAM_TROLLEY_HD
+      exclude_seeded: true
+      exclude_al_excluded: true
+      min_brightness: 15.0
+      max_brightness: 245.0
+      start: "2020-01-01"
+      end: "2027-01-01"
+      use_full_res_images: false
+      min_milliseconds_between_images: 0.0
+      sama_priority: -300
+    export:
+      sama_project_id: 13803
+      prefix: al-poeppelmann-trolley
+    selection:
+      strategy: uncertainty_topk_coreset
+      n_select: 40
+    uncertainty_coreset:
+      feature_model: resnet50
+      uncertainty_model: poeppelmann_only
+      provider: bald
+      candidate_multiplier: 4
+      alpha: 0.5
+      mc_iterations: 5
+      batch_size: 128
+      aggregation: topk_mean
+      topk_fraction: 0.1
+    alges:
+      model: poeppelmann_only
+      method: semantic
+      batch_size: 32
+    coreset:
+      feature_model: resnet50
+  aespjetway:
+    query:
+      sensor: CAM_CABIN
+    export:
+      sama_project_id: 57917
+      prefix: al-aespjetway-cabin
+    selection:
+      strategy: coreset
+    coreset:
+      feature_model: resnet50
+    uncertainty_coreset:
+      uncertainty_model: aespjetway_door_only
+    alges:
+      model: aespjetway_only
+  aespjetway_wide:
+    crid_origin: aespjetway
+    query:
+      sensor: CAM_CABIN_WIDE
+    export:
+      sama_project_id: 57917
+      prefix: al-aesp-wide
+    selection:
+      strategy: coreset
+    coreset:
+      feature_model: resnet50
+    uncertainty_coreset:
+      uncertainty_model: aespjetway_only
+    alges:
+      model: aespjetway_only
+  pbbfraport:
+    crid_origin: pbbfraport
+    query:
+      sensor: CAM_CABIN_WIDE
+    export:
+      sama_project_id: 57917
+      prefix: al-fraport-wide
+    selection:
+      strategy: coreset
+    coreset:
+      feature_model: resnet50
+    uncertainty_coreset:
+      uncertainty_model: fraport_only
+    alges:
+      model: fraport_only
+
+models:
+  resnet50:
+    type: resnet50
+    image_size: [224, 224]
+  geiles_unet_250912:
+    type: unet
+    path: /Users/lukas/Downloads/geiles_unet_250912_0000000_custom_fold1.zip
+    # url: https://...  # optional: auto-download if path doesn't exist
+    image_size: [320, 240]
+  aespjetway_only:
+    type: unet
+    url: https://andritzautocraneblobs.blob.core.windows.net/models/unet_260317_0000000_custom_fold1.zip?sv=2021-10-04&st=2026-03-17T13%3A54%3A17Z&se=2026-07-18T12%3A54%3A00Z&sr=b&sp=r&sig=fkW3dfcs0klKG4wvVJ2iycVL18KPmIdtcGD2TO3CdqA%3D
+    image_size: [240, 320]
+  aespjetway_door_only:
+    type: unet
+    url: https://unettraining4416116272.blob.core.windows.net/azureml-blobstore-7ee6bdbb-4ede-4cd8-be4a-9882eaf56aac/azureml/a4afab42-adb4-4808-a3a3-5f486dec4b21/model_output/fold_1/unet_260503_225659d3_a4afab42-adb4-4808-a3a3-5f486dec4b21_fold1.zip?sp=r&st=2026-05-03T14:33:36Z&se=2026-06-03T22:48:36Z&spr=https&sv=2025-11-05&sr=b&sig=Y%2F7fRj0v6BxdoNfoHd2dl5RvnnhQFxy1vJJpsm0xEq0%3D
+    image_size: [320, 240]
+  fraport_only:
+    type: unet
+    path: /Users/lukas/Downloads/jetway_door_wide_260610_0c423c5c_9f00512f-2d51-4392-be0a-5ec4f9ea4c67_fold1.zip
+    image_size: [256, 176]
+  poeppelmann_only:
+    type: unet
+    url: https://unettraining4416116272.blob.core.windows.net/azureml-blobstore-7ee6bdbb-4ede-4cd8-be4a-9882eaf56aac/azureml/48469629-c094-4c91-b35e-ce6103cba2d4/model_output/fold_1/unet_260424_0000000_48469629-c094-4c91-b35e-ce6103cba2d4_fold1.zip?sp=r&st=2026-04-24T20:32:32Z&se=2026-05-25T04:47:32Z&spr=https&sv=2025-11-05&sr=b&sig=EQ%2FKlc8IFAOaW2yqYiWVKEWplZtIooICby28JDm6jC0%3D
+    image_size: [320, 240]
+
+query:
+  exclude_seeded: true
+  cache_root: data/active_learning/feature_cache
+  # brightness_filter_enabled: false   # optional: skip brightness scoring entirely
+  min_brightness: 10
+  max_brightness: 220 # filter out overexposed images (0 to disable)
+  start: "2020-01-01"
+  end: "2027-01-01"
+  use_full_res_images: false
+
+# Strategy and selection (seed.py, compare_strategies.py)
+selection:
+  strategy: alges
+  n_select: 50
+  seed: 42
+
+coreset:
+  feature_model: resnet50
+
+uncertainty_coreset:
+  feature_model: resnet50
+  uncertainty_model: geiles_unet_250912
+  alpha: 0.5 # 0=pure uncertainty, 1=pure diversity
+  provider: mc_dropout # mc_dropout | entropy | bald
+  mc_iterations: 5
+  batch_size: 128
+  aggregation: topk_mean
+  topk_fraction: 0.10
+  candidate_multiplier: 4
+
+alges:
+  model: geiles_unet_250912
+  method: semantic # image | semantic
+  batch_size: 32
+
+export:
+  mosaic_path: data/active_learning/mosaic_seed.jpg

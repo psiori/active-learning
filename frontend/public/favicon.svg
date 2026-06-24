@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="5"
+            orient="auto" markerUnits="userSpaceOnUse">
+      <polygon points="0,0 10,5 0,10" fill="#60a5fa"/>
+    </marker>
+  </defs>
+  <rect width="32" height="32" rx="6" fill="#1a1a2e"/>
+  <path d="M 16 6 A 10 10 0 1 1 7.34 11"
+        fill="none" stroke="#60a5fa" stroke-width="2" stroke-opacity="0.45"
+        marker-end="url(#ah)"/>
+  <circle cx="16"    cy="6"  r="3"   fill="#60a5fa"/>
+  <circle cx="24.66" cy="11" r="2.5" fill="#60a5fa" fill-opacity="0.65"/>
+  <circle cx="24.66" cy="21" r="2.5" fill="#60a5fa" fill-opacity="0.65"/>
+  <circle cx="16"    cy="26" r="3.5" fill="#60a5fa"/>
+  <circle cx="7.34"  cy="21" r="2.5" fill="#60a5fa" fill-opacity="0.65"/>
+</svg>
