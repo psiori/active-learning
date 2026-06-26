@@ -289,7 +289,9 @@ def overlay_mosaic_paths(
     elif rows is None:
         rows = int(math.ceil(len(tiles) / cols))
 
-    canvas = Image.new("RGB", (cols * resize_width, rows * resize_height), (128, 128, 128))
+    canvas = Image.new(
+        "RGB", (cols * resize_width, rows * resize_height), (128, 128, 128)
+    )
     for index, tile in enumerate(tiles):
         row = index // cols
         col = index % cols

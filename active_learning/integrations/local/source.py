@@ -68,4 +68,6 @@ class LocalImageProviderSource(ImageProviderSource):
         try:
             return self.sample_paths[sample_id]
         except KeyError as exc:
-            raise FileNotFoundError(f"No local image for sample ID {sample_id!r}") from exc
+            raise FileNotFoundError(
+                f"No local image for sample ID {sample_id!r}"
+            ) from exc
