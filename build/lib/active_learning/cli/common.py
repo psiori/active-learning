@@ -37,6 +37,7 @@ COMMON_CLI_MAP = {
     "aggregation": ("uncertainty_coreset", "aggregation"),
     "topk_fraction": ("uncertainty_coreset", "topk_fraction"),
     "candidate_multiplier": ("uncertainty_coreset", "candidate_multiplier"),
+    "target_classes": ("uncertainty_coreset", "target_classes"),
     "method": ("alges", "method"),
     "mosaic_path": ("export", "mosaic_path"),
 }
@@ -112,6 +113,7 @@ def add_common_seed_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument("--topk-fraction", type=float, default=U)
     parser.add_argument("--candidate-multiplier", type=int, default=U)
+    parser.add_argument("--target-classes", type=int, nargs="*", default=U)
     parser.add_argument("--method", default=U, choices=VALID_ALGES_METHODS)
     parser.add_argument("--mosaic-path", default=U)
     parser.add_argument("--model-path", default=U)

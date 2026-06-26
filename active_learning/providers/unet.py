@@ -5,6 +5,7 @@ import importlib
 import json
 import os
 import sys
+from pathlib import Path
 
 import tensorflow as tf
 
@@ -14,9 +15,10 @@ DEFAULT_PSIPY_PATH = "/crid/jupyterhub/.psipy"
 def load_unet(model_path: str, psipy_path: str = DEFAULT_PSIPY_PATH):
     """Load a psipy UNet model from a .zip file."""
     unet_cls = _load_unet_class(psipy_path)
-    unet = unet_cls.load(model_path)
+    resolved_model_path = _resolve_model_path(model_path)
+    unet = unet_cls.load(resolved_model_path)
     try:
-        unet._model_path = model_path
+        unet._model_path = resolved_model_path
     except Exception:
         pass
     return unet
@@ -68,6 +70,32 @@ def _load_unet_class(psipy_path: str):
     if psipy_path not in sys.path:
         sys.path.insert(0, psipy_path)
     return importlib.import_module("psipy.vision.model").UNet
+
+
+def _resolve_model_path(model_path: str) -> str:
+    path = Path(model_path)
+    if not path.is_dir():
+        return str(path)
+
+    sibling_zip = path.with_suffix(".zip")
+    if sibling_zip.is_file():
+        return str(sibling_zip)
+
+    zip_files = sorted(path.glob("*.zip"))
+    if len(zip_files) == 1:
+        return str(zip_files[0])
+
+    if zip_files:
+        options = ", ".join(str(p) for p in zip_files)
+        raise IsADirectoryError(
+            f"UNet model_path {model_path!r} is a directory with multiple .zip "
+            f"files. Configure one of: {options}"
+        )
+
+    raise IsADirectoryError(
+        f"UNet model_path {model_path!r} is a directory. Configure the .zip file "
+        f"directly or place it at {str(sibling_zip)!r}."
+    )
 
 
 def _file_sha1(path: str) -> str:

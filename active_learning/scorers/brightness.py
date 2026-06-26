@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import numpy as np
-from azure.common import AzureHttpError
 from PIL import Image, UnidentifiedImageError
 from tqdm import tqdm
 
@@ -27,6 +26,14 @@ _UNREADABLE_BRIGHTNESS_CACHE = {
 }
 
 
+def _is_not_found_error(exc: Exception) -> bool:
+    status_code = getattr(exc, "status_code", None)
+    if status_code is None:
+        response = getattr(exc, "response", None)
+        status_code = getattr(response, "status_code", None)
+    return status_code == 404
+
+
 def _lowres_paths_parallel(
     image_provider: ImageProvider,
     sample_ids: list[SampleId],
@@ -44,8 +51,8 @@ def _lowres_paths_parallel(
             return sid, image_provider.get_lowres(sid)
         except FileNotFoundError:
             return sid, None
-        except AzureHttpError as e:
-            if e.status_code == 404:
+        except Exception as exc:
+            if _is_not_found_error(exc):
                 return sid, None
             raise
 

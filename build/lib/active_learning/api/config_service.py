@@ -206,6 +206,7 @@ def get_project_config(
             aggregation=cfg.uncertainty_coreset.aggregation,
             topk_fraction=cfg.uncertainty_coreset.topk_fraction,
             candidate_multiplier=cfg.uncertainty_coreset.candidate_multiplier,
+            target_classes=cfg.uncertainty_coreset.target_classes,
         ),
         alges=AlgesSettings(
             model=cfg.alges.model,

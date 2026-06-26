@@ -428,8 +428,13 @@ class UncertaintyCoresetConfig:
     aggregation: str = "topk_mean"
     topk_fraction: float = 0.10
     candidate_multiplier: int = 4
+    target_classes: list[int] | None = None
 
     def __post_init__(self):
+        if self.target_classes is None:
+            self.target_classes = []
+        else:
+            self.target_classes = [int(class_id) for class_id in self.target_classes]
         if not 0.0 <= self.alpha <= 1.0:
             raise ConfigError(f"alpha must be in [0, 1], got {self.alpha:.2f}")
         if self.provider not in VALID_PROVIDERS:

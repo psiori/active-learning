@@ -129,6 +129,10 @@ def select_uncertainty_topk_then_coreset(
         sample_id: artifacts["uncertainty"][sample_id]
         for sample_id in pruned.selected_ids
     }
+    pruned.scores = {
+        sample_id: float(artifacts["uncertainty"][sample_id])
+        for sample_id in pruned.selected_ids
+    }
     return pruned
 
 

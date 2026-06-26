@@ -156,6 +156,9 @@ def build_query_preview_config(
         resolved["uncertainty_coreset"]["candidate_multiplier"] = (
             request.candidate_multiplier
         )
+    if request.target_classes is not None:
+        resolved.setdefault("uncertainty_coreset", {})
+        resolved["uncertainty_coreset"]["target_classes"] = request.target_classes
     if request.alges_model is not None:
         resolved.setdefault("alges", {})
         resolved["alges"]["model"] = request.alges_model
@@ -373,6 +376,11 @@ def build_export_config(export_context) -> object:
             aggregation=export_context.uncertainty_coreset.aggregation,
             topk_fraction=export_context.uncertainty_coreset.topk_fraction,
             candidate_multiplier=export_context.uncertainty_coreset.candidate_multiplier,
+            target_classes=getattr(
+                export_context.uncertainty_coreset,
+                "target_classes",
+                [],
+            ),
         ),
         alges=SimpleNamespace(
             model=export_context.alges.model,
@@ -471,6 +479,7 @@ def build_uncertainty_settings(cfg) -> UncertaintySettings:
         aggregation=cfg.uncertainty_coreset.aggregation,
         topk_fraction=cfg.uncertainty_coreset.topk_fraction,
         candidate_multiplier=cfg.uncertainty_coreset.candidate_multiplier,
+        target_classes=cfg.uncertainty_coreset.target_classes,
     )
 
 

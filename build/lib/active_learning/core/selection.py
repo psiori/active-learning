@@ -195,6 +195,7 @@ def run_uncertainty_selection(
     batch_size: int = 8,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     strategy: str = "uncertainty_coreset",
     seed: int | None = None,
     progress: bool = False,
@@ -256,6 +257,7 @@ def run_uncertainty_selection(
             batch_size=batch_size,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
             progress=progress,
             on_step=u_on,
         )
@@ -272,6 +274,7 @@ def run_uncertainty_selection(
             batch_size=batch_size,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
             progress=progress,
             on_step=u_on,
         )
@@ -287,6 +290,7 @@ def run_uncertainty_selection(
             batch_size=batch_size,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
             progress=progress,
             on_step=u_on,
         )
@@ -453,6 +457,7 @@ def run_selection(
             batch_size=uc.batch_size,
             aggregation=uc.aggregation,
             topk_fraction=uc.topk_fraction,
+            target_classes=uc.target_classes,
             strategy=strategy,
             seed=cfg.selection.seed,
             progress=progress,

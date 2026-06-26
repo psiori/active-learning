@@ -1,6 +1,8 @@
 """Tests for cache namespacing helpers."""
 
-from active_learning.providers.unet import unet_cache_namespace
+import pytest
+
+from active_learning.providers.unet import _resolve_model_path, unet_cache_namespace
 
 
 class _DummyUnet:
@@ -19,3 +21,38 @@ def test_unet_cache_namespace_changes_with_config():
     assert ns_a != ns_b
     assert ns_a.startswith("poeppelmann_only_")
     assert ns_b.startswith("poeppelmann_only_")
+
+
+def test_resolve_model_path_accepts_file_path(tmp_path):
+    model_zip = tmp_path / "model.zip"
+    model_zip.write_bytes(b"not really a model")
+
+    assert _resolve_model_path(str(model_zip)) == str(model_zip)
+
+
+def test_resolve_model_path_uses_sibling_zip_for_legacy_directory(tmp_path):
+    model_dir = tmp_path / "unet_260220_0000000_custom_fold1"
+    model_dir.mkdir()
+    model_zip = tmp_path / "unet_260220_0000000_custom_fold1.zip"
+    model_zip.write_bytes(b"not really a model")
+
+    assert _resolve_model_path(str(model_dir)) == str(model_zip)
+
+
+def test_resolve_model_path_uses_single_zip_inside_directory(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    model_zip = model_dir / "fold1.zip"
+    model_zip.write_bytes(b"not really a model")
+
+    assert _resolve_model_path(str(model_dir)) == str(model_zip)
+
+
+def test_resolve_model_path_rejects_ambiguous_directory(tmp_path):
+    model_dir = tmp_path / "model"
+    model_dir.mkdir()
+    (model_dir / "fold1.zip").write_bytes(b"not really a model")
+    (model_dir / "fold2.zip").write_bytes(b"not really a model")
+
+    with pytest.raises(IsADirectoryError, match="multiple .zip files"):
+        _resolve_model_path(str(model_dir))

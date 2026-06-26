@@ -63,6 +63,7 @@ def score_entropy(
     batch_size: int = 16,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     use_highres: bool = False,
     progress: bool = False,
     on_step: Callable[[int, int], None] | None = None,
@@ -76,7 +77,11 @@ def score_entropy(
         sample_ids=sample_ids,
         image_provider=image_provider,
         cache_root=cache_root,
-        namespace=f"scorers/uncertainty/{model_namespace}/entropy",
+        namespace=_uncertainty_namespace(
+            model_namespace,
+            "entropy",
+            target_classes=target_classes,
+        ),
         batch_size=batch_size,
         image_size=image_size,
         use_highres=use_highres,
@@ -87,6 +92,7 @@ def score_entropy(
             unet,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
         ),
     )
 
@@ -104,6 +110,7 @@ def score_mc_dropout(
     batch_size: int = 8,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     use_highres: bool = False,
     progress: bool = False,
     on_step: Callable[[int, int], None] | None = None,
@@ -117,7 +124,11 @@ def score_mc_dropout(
         sample_ids=sample_ids,
         image_provider=image_provider,
         cache_root=cache_root,
-        namespace=f"scorers/uncertainty/{model_namespace}/mc_dropout_t{iterations}",
+        namespace=_uncertainty_namespace(
+            model_namespace,
+            f"mc_dropout_t{iterations}",
+            target_classes=target_classes,
+        ),
         batch_size=batch_size,
         image_size=image_size,
         use_highres=use_highres,
@@ -129,6 +140,7 @@ def score_mc_dropout(
             iterations,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
         ),
     )
 
@@ -146,6 +158,7 @@ def score_bald(
     batch_size: int = 8,
     aggregation: str = "topk_mean",
     topk_fraction: float = 0.10,
+    target_classes: list[int] | tuple[int, ...] | None = None,
     use_highres: bool = False,
     progress: bool = False,
     on_step: Callable[[int, int], None] | None = None,
@@ -159,7 +172,11 @@ def score_bald(
         sample_ids=sample_ids,
         image_provider=image_provider,
         cache_root=cache_root,
-        namespace=f"scorers/uncertainty/{model_namespace}/bald_t{iterations}",
+        namespace=_uncertainty_namespace(
+            model_namespace,
+            f"bald_t{iterations}",
+            target_classes=target_classes,
+        ),
         batch_size=batch_size,
         image_size=image_size,
         use_highres=use_highres,
@@ -171,6 +188,7 @@ def score_bald(
             iterations,
             aggregation=aggregation,
             topk_fraction=topk_fraction,
+            target_classes=target_classes,
         ),
     )
 
@@ -266,3 +284,15 @@ def _score_uncertainty(
         )
 
     return scores
+
+
+def _uncertainty_namespace(
+    model_namespace: str,
+    provider_segment: str,
+    *,
+    target_classes: list[int] | tuple[int, ...] | None = None,
+) -> str:
+    class_segment = "all_classes"
+    if target_classes:
+        class_segment = "classes_" + "_".join(str(int(c)) for c in target_classes)
+    return f"scorers/uncertainty/{model_namespace}/{provider_segment}/{class_segment}"

@@ -77,6 +77,10 @@ def test_select_uncertainty_topk_then_coreset_returns_stage_details():
     )
     assert result.details["stage1_ids"] == ["c", "b"]
     assert len(result.selected_ids) == 1
+    assert result.scores == {
+        sample_id: artifacts["uncertainty"][sample_id]
+        for sample_id in result.selected_ids
+    }
 
 
 def test_select_alges_returns_unique_ids():
